@@ -45,8 +45,21 @@ struct TerminiApp: App {
             ContentView()
                 .environment(store)
         } label: {
-            Image(systemName: "terminal")
+            Image(nsImage: menuBarIcon)
         }
         .menuBarExtraStyle(.window)
+    }
+
+    private var menuBarIcon: NSImage {
+        guard let icon = NSImage(named: "Termini Menu Icon") else {
+            return NSImage(systemSymbolName: "terminal", accessibilityDescription: nil) ?? NSImage()
+        }
+        let size = NSSize(width: 18, height: 18)
+        let menuBarIcon = NSImage(size: size, flipped: false) { rect in
+            icon.draw(in: rect, from: .zero, operation: .copy, fraction: 1.0)
+            return true
+        }
+        menuBarIcon.isTemplate = false
+        return menuBarIcon
     }
 }

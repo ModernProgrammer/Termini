@@ -344,6 +344,19 @@ struct ContentView: View {
         .onChange(of: store.activeTabIndex) { _, _ in focusActiveTab() }
     }
 
+    private var toolbarIcon: NSImage {
+        guard let icon = NSImage(named: "Termini Menu Icon") else {
+            return NSImage(systemSymbolName: "terminal", accessibilityDescription: nil) ?? NSImage()
+        }
+        let size = NSSize(width: 14, height: 14)
+        let scaled = NSImage(size: size, flipped: false) { rect in
+            icon.draw(in: rect, from: .zero, operation: .copy, fraction: 1.0)
+            return true
+        }
+        scaled.isTemplate = false
+        return scaled
+    }
+
     private func focusActiveTab() {
         DispatchQueue.main.async {
             let tv = store.activeTab.terminalView
@@ -360,8 +373,8 @@ struct ContentView: View {
 
             // App icon + title
             HStack(spacing: 5) {
-                Image(systemName: "terminal")
-                    .font(.system(size: 11, weight: .medium))
+                Image(nsImage: toolbarIcon)
+                    .renderingMode(.original)
                 if !mini {
                     Text("Termini")
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
@@ -504,13 +517,13 @@ struct SettingsView: View {
 
             // Theme
             settingsRow("Theme") {
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     ForEach(TerminalTheme.all) { theme in
                         let isActive = theme.id == store.currentTheme.id
                         Button { store.currentTheme = theme } label: {
                             Circle()
                                 .fill(theme.swatch)
-                                .frame(width: 22, height: 22)
+                                .frame(width: 18, height: 18)
                                 .overlay(
                                     Circle()
                                         .strokeBorder(Color.white.opacity(isActive ? 0.9 : 0),
@@ -530,15 +543,14 @@ struct SettingsView: View {
                             foreground: store.customForeground
                         )
                     } label: {
-                        // Split circle: left half = background, right half = foreground
                         ZStack {
                             SwiftUI.Color(store.customBackground)
                             HStack(spacing: 0) {
-                                SwiftUI.Color.clear.frame(width: 11)
-                                SwiftUI.Color(store.customForeground).frame(width: 11)
+                                SwiftUI.Color.clear.frame(width: 9)
+                                SwiftUI.Color(store.customForeground).frame(width: 9)
                             }
                         }
-                        .frame(width: 22, height: 22)
+                        .frame(width: 18, height: 18)
                         .clipShape(Circle())
                         .overlay(
                             Circle()
@@ -716,11 +728,21 @@ struct WelcomeView: View {
             Spacer()
 
             VStack(spacing: 20) {
-                Image(systemName: "terminal.fill")
-                    .font(.system(size: 48, weight: .regular))
-                    .foregroundStyle(.primary)
-                    .opacity(showContent ? 1 : 0)
-                    .scaleEffect(showContent ? 1 : 0.8)
+                Image(nsImage: {
+                    guard let icon = NSImage(named: "Termini Menu Icon") else {
+                        return NSImage(systemSymbolName: "terminal.fill", accessibilityDescription: nil) ?? NSImage()
+                    }
+                    let size = NSSize(width: 72, height: 72)
+                    let scaled = NSImage(size: size, flipped: false) { rect in
+                        icon.draw(in: rect, from: .zero, operation: .copy, fraction: 1.0)
+                        return true
+                    }
+                    scaled.isTemplate = false
+                    return scaled
+                }())
+                .renderingMode(.original)
+                .opacity(showContent ? 1 : 0)
+                .scaleEffect(showContent ? 1 : 0.8)
 
                 VStack(spacing: 6) {
                     Text("Termini")
