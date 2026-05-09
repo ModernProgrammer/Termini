@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F1D45A442F7890E500E1DAA7 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = C3A8F1B2D4E567890A012346 /* SwiftTerm */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F1D45A172F788A4800E1DAA7 /* Termini.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Termini.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1D45A442F7890E500E1DAA7 /* SwiftTerm in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Termini;
 			packageProductDependencies = (
+				C3A8F1B2D4E567890A012346 /* SwiftTerm */,
 			);
 			productName = Termini;
 			productReference = F1D45A172F788A4800E1DAA7 /* Termini.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = F1D45A0E2F788A4800E1DAA7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C3A8F1B2D4E567890A012345 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F1D45A182F788A4800E1DAA7 /* Products */;
 			projectDirPath = "";
@@ -254,11 +263,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = XREP97TJKH;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -286,11 +295,11 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = XREP97TJKH;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -331,6 +340,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C3A8F1B2D4E567890A012345 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C3A8F1B2D4E567890A012346 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3A8F1B2D4E567890A012345 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F1D45A0F2F788A4800E1DAA7 /* Project object */;
 }
