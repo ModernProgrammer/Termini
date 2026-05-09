@@ -21,7 +21,7 @@ struct TerminalTheme: Identifiable, Hashable {
 
     // MARK: Built-in themes
 
-    static let all: [TerminalTheme] = [.classic, .nord, .solarized, .gruvbox, .matrix]
+    static let all: [TerminalTheme] = [.classic, .dracula, .nord, .solarized, .gruvbox, .matrix]
 
     /// Build a custom theme from user-chosen colors.
     /// ANSI colors fall back to Classic so colored output still looks reasonable.

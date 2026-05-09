@@ -6,7 +6,7 @@ A lightweight macOS menu bar terminal. Termini lives in your menu bar and gives 
 
 **Multi-tab sessions** — Open multiple terminal tabs in a single window. Each tab tracks the current working directory and displays it as the tab title, updated in real time via `proc_pidinfo`.
 
-**Themes** — Choose from five built-in color schemes: Classic, Nord, Solarized, Gruvbox, and Matrix. A custom theme option lets you set your own background and foreground colors via hex input.
+**Themes** — Choose from six built-in color schemes: Classic, Dracula, Nord, Solarized, Gruvbox, and Matrix. A custom theme option lets you set your own background and foreground colors via hex input.
 
 **Adjustable opacity** — Slide the background opacity from fully transparent to fully opaque, useful for keeping the terminal visible over other windows.
 
