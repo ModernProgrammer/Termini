@@ -1,10 +1,18 @@
 # Termini
 
+
 A lightweight macOS menu bar terminal. Termini lives in your menu bar and gives you instant access to a full terminal session without leaving your current workflow.
 
 ## Features
 
+<img src="assets/images/Termini%20Landing.png" width="400">
+
+**Welcome screen** — An animated splash screen on first launch with a typing demo.
+
 **Multi-tab sessions** — Open multiple terminal tabs in a single window. Each tab tracks the current working directory and displays it as the tab title, updated in real time via `proc_pidinfo`.
+
+
+<img src="assets/images/Termini%20Settings.png" width="400">
 
 **Themes** — Choose from six built-in color schemes: Classic, Dracula, Nord, Solarized, Gruvbox, and Matrix. A custom theme option lets you set your own background and foreground colors via hex input.
 
@@ -18,7 +26,8 @@ A lightweight macOS menu bar terminal. Termini lives in your menu bar and gives 
 
 **Login item** — Optionally launch Termini automatically at login via the Settings popover.
 
-**Welcome screen** — An animated splash screen on first launch with a typing demo.
+
+
 
 ## Requirements
 
