@@ -1,5 +1,10 @@
 # Termini
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ModernProgrammer/Termini)
+![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
+![Swift](https://img.shields.io/badge/swift-5.9-orange)
+![License](https://img.shields.io/github/license/ModernProgrammer/Termini)
+
 A lightweight macOS menu bar terminal. Termini lives in your menu bar and gives you instant access to a full terminal session without leaving your current workflow.
 
 ## Features
