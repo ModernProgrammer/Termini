@@ -17,7 +17,13 @@ If you find Termini useful, consider giving it a ⭐ — it helps others discove
 
 ## Features
 
+
+
 <table border="0">
+  <tr>
+    <td><img src="assets/images/Termini%20Desktop.png" width="400" alt="Landing"></td>
+    <td><img src="assets/images/Termini%20XCode.png" width="400" alt="Landing"></td>
+  </tr>
   <tr>
     <td><img src="assets/images/Termini%20Landing.png" width="400" alt="Landing"></td>
     <td><img src="assets/images/Termini%20Home.png" width="400" alt="Home"></td>
