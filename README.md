@@ -13,6 +13,8 @@ A lightweight macOS menu bar terminal.
 
 Termini lives in your menu bar and gives you instant access to a full terminal session without leaving your current workflow.
 
+If you find Termini useful, consider giving it a ⭐ — it helps others discover the project!
+
 ## Features
 
 <table border="0">
