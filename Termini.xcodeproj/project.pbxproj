@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F1D45A442F7890E500E1DAA7 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = C3A8F1B2D4E567890A012346 /* SwiftTerm */; };
+		D7B2E4F1A3C5968703B1C4E3 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = D7B2E4F1A3C5968703B1C4E2 /* KeyboardShortcuts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1D45A442F7890E500E1DAA7 /* SwiftTerm in Frameworks */,
+				D7B2E4F1A3C5968703B1C4E3 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = Termini;
 			packageProductDependencies = (
 				C3A8F1B2D4E567890A012346 /* SwiftTerm */,
+				D7B2E4F1A3C5968703B1C4E2 /* KeyboardShortcuts */,
 			);
 			productName = Termini;
 			productReference = F1D45A172F788A4800E1DAA7 /* Termini.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C3A8F1B2D4E567890A012345 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+				D7B2E4F1A3C5968703B1C4E1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F1D45A182F788A4800E1DAA7 /* Products */;
@@ -350,6 +354,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		D7B2E4F1A3C5968703B1C4E1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -357,6 +369,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C3A8F1B2D4E567890A012345 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
 			productName = SwiftTerm;
+		};
+		D7B2E4F1A3C5968703B1C4E2 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D7B2E4F1A3C5968703B1C4E1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -5,31 +5,28 @@
 
 import SwiftUI
 import AppKit
+import KeyboardShortcuts
+
+// MARK: - Global shortcut
+
+extension KeyboardShortcuts.Name {
+    /// Opens or hides Termini from any app. Users can re-record it in Settings.
+    static let toggleTermini = Self("toggleTermini", initial: .init(.e, modifiers: .command))
+}
 
 // MARK: - AppDelegate
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    private var eventMonitor: Any?
+    private var menuBar: MenuBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Right-click on the menu bar icon → show a Quit menu.
-        // Status bar events have no associated NSWindow, so event.window == nil.
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { event in
-            guard event.window == nil else { return event }
-            let menu = NSMenu()
-            let quit = menu.addItem(
-                withTitle: "Quit Termini",
-                action: #selector(NSApplication.terminate(_:)),
-                keyEquivalent: "q"
-            )
-            quit.target = NSApp
-            _ = menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
-            return nil
-        }
-    }
+        let menuBar = MenuBarController(store: TerminalStore())
+        self.menuBar = menuBar
 
-    deinit {
-        if let monitor = eventMonitor { NSEvent.removeMonitor(monitor) }
+        // Global shortcut (⌘E by default) → open/close the terminal panel.
+        KeyboardShortcuts.onKeyDown(for: .toggleTermini) {
+            menuBar.toggle()
+        }
     }
 }
 
@@ -38,28 +35,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct TerminiApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var store = TerminalStore()
 
     var body: some Scene {
-        MenuBarExtra {
-            ContentView()
-                .environment(store)
-        } label: {
-            Image(nsImage: menuBarIcon)
-        }
-        .menuBarExtraStyle(.window)
-    }
-
-    private var menuBarIcon: NSImage {
-        guard let icon = NSImage(named: "Termini Menu Icon") else {
-            return NSImage(systemSymbolName: "terminal", accessibilityDescription: nil) ?? NSImage()
-        }
-        let size = NSSize(width: 18, height: 18)
-        let menuBarIcon = NSImage(size: size, flipped: false) { rect in
-            icon.draw(in: rect, from: .zero, operation: .copy, fraction: 1.0)
-            return true
-        }
-        menuBarIcon.isTemplate = false
-        return menuBarIcon
+        // The menu bar icon and terminal panel live in MenuBarController.
+        // SwiftUI still needs a scene: an empty Settings scene never opens a
+        // window, and keeps the default main menu whose Edit items give the
+        // terminal ⌘C / ⌘V / ⌘A.
+        Settings { EmptyView() }
+            .commands { CommandGroup(replacing: .appSettings) {} }
     }
 }
