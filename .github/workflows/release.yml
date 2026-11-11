@@ -65,6 +65,7 @@ jobs:
           xcodebuild -project Termini.xcodeproj -scheme Termini \
             -configuration Release \
             -derivedDataPath build/dd \
+            -skipPackagePluginValidation \
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="${{ secrets.SIGNING_IDENTITY }}" \
