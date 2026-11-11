@@ -7,6 +7,7 @@ import SwiftUI
 import SwiftTerm
 import AppKit
 import ServiceManagement
+import KeyboardShortcuts
 
 // MARK: - CWD helper (proc_pidinfo, no bridging header needed)
 
@@ -224,8 +225,6 @@ final class TerminalStore {
         }
     }
 
-    var hasSeenWelcome: Bool = false
-
     init() {
         let savedId      = UserDefaults.standard.string(forKey: "themeId") ?? "classic"
         let savedFontSz  = CGFloat(UserDefaults.standard.double(forKey: "fontSize"))
@@ -271,6 +270,11 @@ final class TerminalStore {
 
     func removeTab(at index: Int) {
         guard tabs.count > 1 else { return }
+        // End the tab's shell too — dropping the tab alone leaves it running.
+        // Hang it up like closing a terminal window does; interactive shells
+        // ignore the SIGTERM that SwiftTerm's terminate() sends.
+        let shellPid = tabs[index].terminalView.process.shellPid
+        if shellPid > 0 { kill(shellPid, SIGHUP) }
         tabs.remove(at: index)
         if activeTabIndex >= tabs.count { activeTabIndex = tabs.count - 1 }
     }
@@ -298,106 +302,14 @@ final class TerminalStore {
     }
 }
 
-// MARK: - WindowPinController
-
-/// Keeps the MenuBarExtra window on top of other windows when pinned.
-/// The system normally hides the window the moment it loses focus; when
-/// pinned we float it and re-order it front whenever it tries to go away.
-@Observable
-final class WindowPinController {
-    var isPinned: Bool = false {
-        didSet { apply() }
-    }
-
-    @ObservationIgnored private weak var window: NSWindow?
-    @ObservationIgnored private var resignObserver: Any?
-    @ObservationIgnored private var defaultLevel: NSWindow.Level = .statusBar
-
-    func attach(_ window: NSWindow) {
-        guard self.window !== window else { return }
-        self.window = window
-        defaultLevel = window.level
-
-        if let observer = resignObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
-        resignObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didResignKeyNotification,
-            object: window, queue: .main
-        ) { [weak self] _ in
-            guard let self, self.isPinned, let window = self.window else { return }
-            // The system orders the panel out right after resign — bring it back.
-            DispatchQueue.main.async { window.orderFrontRegardless() }
-        }
-        apply()
-    }
-
-    private func apply() {
-        guard let window else { return }
-        if isPinned {
-            window.level = .floating
-            window.hidesOnDeactivate = false
-            window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
-            window.orderFrontRegardless()
-        } else {
-            window.level = defaultLevel
-        }
-    }
-
-    deinit {
-        if let observer = resignObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
-    }
-}
-
-// MARK: - WindowAccessor
-
-/// Invisible view that hands the hosting NSWindow to a callback.
-private struct WindowAccessor: NSViewRepresentable {
-    let onWindow: (NSWindow) -> Void
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async {
-            if let window = view.window { onWindow(window) }
-        }
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
-            if let window = nsView.window { onWindow(window) }
-        }
-    }
-}
-
 // MARK: - ContentView
 
 struct ContentView: View {
     @Environment(TerminalStore.self) var store
+    @Environment(MenuBarController.self) var menuBar
     @State private var showSettings = false
-    @State private var pinController = WindowPinController()
 
     var body: some View {
-        ZStack {
-            if store.hasSeenWelcome {
-                terminalContent
-                    .transition(.opacity)
-            } else {
-                WelcomeView(size: store.windowSize.terminalSize) {
-                    store.hasSeenWelcome = true
-                }
-                .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.4), value: store.hasSeenWelcome)
-        .background(WindowAccessor { pinController.attach($0) })
-    }
-
-    // MARK: Terminal content
-
-    private var terminalContent: some View {
         let ts = store.windowSize.terminalSize
         return VStack(spacing: 0) {
             toolbar
@@ -416,8 +328,28 @@ struct ContentView: View {
             .frame(width: ts.width, height: ts.height)
         }
         .animation(.spring(duration: 0.35, bounce: 0.1), value: store.windowSize)
+        .background {
+            // Invisible, just carries the ⌘W shortcut.
+            Button("Close Tab", action: closeActiveTab)
+                .keyboardShortcut("w", modifiers: .command)
+                .opacity(0)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
         .onAppear { focusActiveTab() }
-        .onChange(of: store.activeTabIndex) { _, _ in focusActiveTab() }
+        // Follow the tab on screen rather than the index: closing the active tab
+        // keeps the index but shows its neighbour, which needs focus too.
+        .onChange(of: store.activeTab.id) { _, _ in focusActiveTab() }
+    }
+
+    /// Closes the active tab. The last tab is never closed — ⌘W just hides the
+    /// window, keeping its shell session running.
+    private func closeActiveTab() {
+        if store.tabs.count > 1 {
+            store.removeTab(at: store.activeTabIndex)
+        } else {
+            menuBar.hide()
+        }
     }
 
     private var toolbarIcon: NSImage {
@@ -476,7 +408,8 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
-            .help("New Tab")
+            .keyboardShortcut("t", modifiers: .command)
+            .help("New Tab (⌘T)")
             .padding(.leading, 2)
 
             Spacer(minLength: 4)
@@ -485,15 +418,15 @@ struct ContentView: View {
             openButton
 
             // Lock (keep window on top)
-            Button { pinController.isPinned.toggle() } label: {
-                Image(systemName: pinController.isPinned ? "lock.fill" : "lock.open")
+            Button { menuBar.isPinned.toggle() } label: {
+                Image(systemName: menuBar.isPinned ? "lock.fill" : "lock.open")
                     .font(.system(size: 10, weight: .medium))
                     .frame(width: 26, height: 28)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .foregroundStyle(pinController.isPinned ? Color.accentColor : Color.secondary)
-            .help(pinController.isPinned
+            .foregroundStyle(menuBar.isPinned ? Color.accentColor : Color.secondary)
+            .help(menuBar.isPinned
                   ? "Unlock — Termini hides when you click away"
                   : "Lock — keep Termini on top of other windows")
 
@@ -743,6 +676,13 @@ struct SettingsView: View {
 
             settingsDivider
 
+            // Global shortcut that opens/closes Termini from any app
+            settingsRow("Shortcut") {
+                KeyboardShortcuts.Recorder(for: .toggleTermini)
+            }
+
+            settingsDivider
+
             settingsRow("Login") {
                 Toggle("Open at Login", isOn: Binding(
                     get: { SMAppService.mainApp.status == .enabled },
@@ -790,117 +730,6 @@ struct SettingsView: View {
 
     private var settingsDivider: some View {
         Divider().padding(.horizontal, 16)
-    }
-}
-
-// MARK: - WelcomeView
-
-struct WelcomeView: View {
-    var size: CGSize
-    var onDismiss: () -> Void
-
-    @State private var showContent = false
-    @State private var typedText   = ""
-    @State private var cursorOn    = true
-    @State private var typingTask: Task<Void, Never>? = nil
-
-    private let commands = [
-        "git status",
-        "npm run dev",
-        "ls -la",
-        "python3 manage.py runserver",
-        "docker ps",
-    ]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            VStack(spacing: 20) {
-                Image(nsImage: {
-                    guard let icon = NSImage(named: "Termini Menu Icon") else {
-                        return NSImage(systemSymbolName: "terminal.fill", accessibilityDescription: nil) ?? NSImage()
-                    }
-                    let size = NSSize(width: 72, height: 72)
-                    let scaled = NSImage(size: size, flipped: false) { rect in
-                        icon.draw(in: rect, from: .zero, operation: .copy, fraction: 1.0)
-                        return true
-                    }
-                    scaled.isTemplate = false
-                    return scaled
-                }())
-                .renderingMode(.original)
-                .opacity(showContent ? 1 : 0)
-                .scaleEffect(showContent ? 1 : 0.8)
-
-                VStack(spacing: 6) {
-                    Text("Termini")
-                        .font(.system(size: 30, weight: .bold, design: .monospaced))
-                    Text("Your terminal, right in the menu bar.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-                .opacity(showContent ? 1 : 0)
-
-                HStack(spacing: 0) {
-                    Text("% ")
-                        .foregroundStyle(.green)
-                    Text(typedText)
-                    Rectangle()
-                        .frame(width: 7, height: 14)
-                        .opacity(cursorOn ? 1 : 0)
-                }
-                .font(.system(size: 13, design: .monospaced))
-                .frame(width: min(size.width - 80, 280), alignment: .leading)
-                .opacity(showContent ? 1 : 0)
-            }
-
-            Spacer()
-
-            Button("Open Terminal  →") {
-                typingTask?.cancel()
-                onDismiss()
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .padding(.bottom, 36)
-            .opacity(showContent ? 1 : 0)
-        }
-        .frame(width: size.width, height: size.height + 36)
-        .onAppear {
-            withAnimation(.spring(duration: 0.7, bounce: 0.3)) { showContent = true }
-            typingTask = Task { await runTypingLoop() }
-            Task { await blinkCursor() }
-        }
-        .onDisappear { typingTask?.cancel() }
-    }
-
-    private func runTypingLoop() async {
-        try? await Task.sleep(for: .milliseconds(700))
-        while !Task.isCancelled {
-            for command in commands {
-                if Task.isCancelled { return }
-                for char in command {
-                    if Task.isCancelled { return }
-                    typedText.append(char)
-                    try? await Task.sleep(for: .milliseconds(75))
-                }
-                try? await Task.sleep(for: .milliseconds(1100))
-                while !typedText.isEmpty {
-                    if Task.isCancelled { return }
-                    typedText.removeLast()
-                    try? await Task.sleep(for: .milliseconds(35))
-                }
-                try? await Task.sleep(for: .milliseconds(300))
-            }
-        }
-    }
-
-    private func blinkCursor() async {
-        while true {
-            try? await Task.sleep(for: .milliseconds(500))
-            withAnimation(.linear(duration: 0.01)) { cursorOn.toggle() }
-        }
     }
 }
 
