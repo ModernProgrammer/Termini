@@ -39,6 +39,14 @@ jobs:
           sudo xcode-select -switch "$LATEST/Contents/Developer"
           xcodebuild -version
 
+      - name: Install Metal Toolchain
+        run: |
+          # SwiftTerm 1.20+ ships a Metal shader (Shaders.metal). Compiling it
+          # requires the Metal Toolchain, which Xcode 16.3+/26 downloads as a
+          # separate component the runner may not have preinstalled. Without
+          # this step the build fails with "cannot execute tool 'metal'".
+          xcodebuild -downloadComponent MetalToolchain
+
       - name: Import signing certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
