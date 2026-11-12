@@ -1,0 +1,49 @@
+name: CI
+
+# Builds the app on every pull request (and on pushes to the main branches) so
+# changes that don't compile are caught before they're merged. No code signing
+# or secrets: this only needs to prove the project builds.
+
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [main, development]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: |
+          # The project uses a recent Xcode project format, so pick the newest
+          # non-beta Xcode installed on the runner rather than the image default.
+          LATEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | grep -vi beta | sort -V | tail -1)
+          echo "Selecting $LATEST"
+          sudo xcode-select -switch "$LATEST/Contents/Developer"
+          xcodebuild -version
+
+      - name: Install Metal Toolchain
+        run: |
+          # SwiftTerm 1.20+ compiles a Metal shader (Shaders.metal) that needs
+          # the Metal Toolchain, a separate Xcode component. No-op if already
+          # present on the runner.
+          xcodebuild -downloadComponent MetalToolchain
+
+      - name: Build
+        run: |
+          xcodebuild -project Termini.xcodeproj -scheme Termini \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/dd \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            build
