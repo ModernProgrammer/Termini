@@ -60,11 +60,18 @@ final class MenuBarController: NSObject {
             button.action = #selector(statusItemClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+        // macOS 27's expanded status-item interface is not in the current SDK,
+        // so this path is gated behind TERMINI_SDK_HAS_EXPANDED_STATUS_ITEM.
+        // It keeps compiling on today's Xcode; define that flag in the target's
+        // "Other Swift Flags" (-DTERMINI_SDK_HAS_EXPANDED_STATUS_ITEM) once you
+        // build with the macOS 27 SDK to turn the feature back on.
+        #if TERMINI_SDK_HAS_EXPANDED_STATUS_ITEM
         if #available(macOS 27.0, *) {
             // macOS 27 opens status item windows through an expanded interface
             // session, which also highlights the icon while the panel is open.
             statusItem.expandedInterfaceDelegate = self
         }
+        #endif
 
         let shape = RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
         let hostingView = NSHostingView(rootView: AnyView(
@@ -115,11 +122,15 @@ final class MenuBarController: NSObject {
             NSEvent.removeMonitor(monitor)
             outsideClickMonitor = nil
         }
+        #if TERMINI_SDK_HAS_EXPANDED_STATUS_ITEM
         if #available(macOS 27.0, *) {
             statusItem.expandedInterfaceSession?.cancel()
         } else {
             statusItem.button?.highlight(false)
         }
+        #else
+        statusItem.button?.highlight(false)
+        #endif
     }
 
     // MARK: Status item
@@ -233,7 +244,9 @@ final class MenuBarController: NSObject {
         guard panel.isVisible else { return }
         if isPinned {
             // Stay on screen, but let the menu bar know we're no longer open.
+            #if TERMINI_SDK_HAS_EXPANDED_STATUS_ITEM
             if #available(macOS 27.0, *) { statusItem.expandedInterfaceSession?.cancel() }
+            #endif
         } else {
             hide()
         }
@@ -254,6 +267,10 @@ final class MenuBarController: NSObject {
 
 // MARK: - NSStatusItemExpandedInterfaceDelegate
 
+// Gated on the macOS 27 SDK; see the note in init(store:). The delegate types
+// below do not exist in earlier SDKs, so the whole extension is compiled out
+// until TERMINI_SDK_HAS_EXPANDED_STATUS_ITEM is defined.
+#if TERMINI_SDK_HAS_EXPANDED_STATUS_ITEM
 @available(macOS 27.0, *)
 extension MenuBarController: NSStatusItemExpandedInterfaceDelegate {
     func statusItem(_ statusItem: NSStatusItem, didBegin session: NSStatusItemExpandedInterfaceSession) {
@@ -266,3 +283,4 @@ extension MenuBarController: NSStatusItemExpandedInterfaceDelegate {
         hide()
     }
 }
+#endif
