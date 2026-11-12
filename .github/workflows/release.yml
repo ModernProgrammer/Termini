@@ -184,3 +184,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: build/export/Termini.dmg
+          # Auto-generate release notes (merged PRs/commits since the last tag).
+          generate_release_notes: true

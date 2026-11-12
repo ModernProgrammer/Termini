@@ -38,6 +38,8 @@ If you find Termini useful, consider giving it a ⭐ — it helps others discove
 
 **Multi-tab sessions** — Open multiple terminal tabs in a single window (⌘T opens a new one, ⌘W closes it — on the last tab, ⌘W just hides the window). Each tab tracks the current working directory and displays it as the tab title, updated in real time via `proc_pidinfo`.
 
+**Persistent tabs** — Your open tabs and their working directories are restored the next time you open Termini, so you pick up where you left off. On by default; turn it off with the "Restore on relaunch" toggle in Settings.
+
 **Themes** — Choose from six built-in color schemes: Classic, Dracula, Nord, Solarized, Gruvbox, and Matrix. A custom theme option lets you set your own background and foreground colors via hex input.
 
 **Adjustable opacity** — Slide the background opacity from fully transparent to fully opaque, useful for keeping the terminal visible over other windows.
@@ -82,3 +84,14 @@ open build/dd/Build/Products/Debug/Termini.app
 ```
 
 There is no test suite yet.
+
+## Changelog
+
+### v1.2.0
+
+- **Persistent tabs** — open tabs and their working directories are restored on relaunch (Settings → "Restore on relaunch", on by default).
+- **Global shortcut** — press ⌘E (configurable) to open or hide Termini from any app.
+- Updated the embedded terminal engine (SwiftTerm) to 1.20.
+- Tooling — added a pull-request CI build check and Metal Toolchain support for notarized release builds.
+
+Older releases are listed on the [releases page](https://github.com/ModernProgrammer/Termini/releases).
