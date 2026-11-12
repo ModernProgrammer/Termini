@@ -18,15 +18,23 @@ extension KeyboardShortcuts.Name {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBar: MenuBarController?
+    private var store: TerminalStore?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let menuBar = MenuBarController(store: TerminalStore())
+        let store = TerminalStore()
+        self.store = store
+        let menuBar = MenuBarController(store: store)
         self.menuBar = menuBar
 
         // Global shortcut (⌘E by default) → open/close the terminal panel.
         KeyboardShortcuts.onKeyDown(for: .toggleTermini) {
             menuBar.toggle()
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Save the open tabs so the next launch can restore them.
+        store?.persistSession()
     }
 }
 

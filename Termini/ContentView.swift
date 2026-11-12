@@ -89,7 +89,8 @@ final class TerminalTab: Identifiable {
 
     @ObservationIgnored private var cwdTimer: Timer?
 
-    fileprivate init(theme: TerminalTheme, fontSize: CGFloat, opacity: Double = 1.0) {
+    fileprivate init(theme: TerminalTheme, fontSize: CGFloat, opacity: Double = 1.0,
+                     directory: String? = nil) {
         terminalView    = LocalProcessTerminalView(frame: .zero)
         processDelegate = TerminalProcessDelegate()
 
@@ -102,8 +103,18 @@ final class TerminalTab: Identifiable {
         env["COLORTERM"] = "truecolor"
         let envList = env.map { "\($0.key)=\($0.value)" }
         let home    = FileManager.default.homeDirectoryForCurrentUser.path
+        // A restored tab reopens in its saved directory when it still exists;
+        // new tabs (and restores of now-missing paths) start in the home directory.
+        var startDir = home
+        if let directory {
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: directory, isDirectory: &isDir), isDir.boolValue {
+                startDir = directory
+            }
+        }
         terminalView.startProcess(executable: shell, args: ["-l"],
-                                  environment: envList, currentDirectory: home)
+                                  environment: envList, currentDirectory: startDir)
+        processDelegate.currentDirectory = startDir
         applyTheme(theme, opacity: opacity)
 
         // Poll cwd every second via proc_pidinfo — reliable regardless of shell config.
@@ -207,6 +218,16 @@ final class TerminalStore {
         didSet { UserDefaults.standard.set(backgroundOpacity, forKey: "backgroundOpacity") }
     }
 
+    /// When on, the open tabs and their working directories are saved on quit
+    /// and reopened on the next launch. Enabled by default.
+    var restoreTabs: Bool {
+        didSet {
+            UserDefaults.standard.set(restoreTabs, forKey: "restoreTabsEnabled")
+            // Turning it off should also forget any previously saved session.
+            if !restoreTabs { persistSession() }
+        }
+    }
+
     var customBackground: NSColor {
         didSet {
             saveColor(customBackground, forKey: "customBackground")
@@ -249,7 +270,22 @@ final class TerminalStore {
         fontSize          = size
         windowSize        = savedWinSize
         backgroundOpacity = savedOpacity
-        tabs              = [TerminalTab(theme: savedTheme, fontSize: size)]
+
+        let restore = UserDefaults.standard.object(forKey: "restoreTabsEnabled") as? Bool ?? true
+        restoreTabs = restore
+
+        // Reopen the saved tabs (one shell per saved directory) when restore is
+        // on and a session was saved; otherwise start with a single home tab.
+        let savedDirs = restore ? UserDefaults.standard.stringArray(forKey: "savedTabDirectories") : nil
+        if let savedDirs, !savedDirs.isEmpty {
+            tabs = savedDirs.map {
+                TerminalTab(theme: savedTheme, fontSize: size, opacity: savedOpacity, directory: $0)
+            }
+            let savedIndex = UserDefaults.standard.integer(forKey: "savedActiveTabIndex")
+            activeTabIndex = min(max(0, savedIndex), tabs.count - 1)
+        } else {
+            tabs = [TerminalTab(theme: savedTheme, fontSize: size, opacity: savedOpacity)]
+        }
     }
 
     private func saveColor(_ color: NSColor, forKey key: String) {
@@ -277,6 +313,25 @@ final class TerminalStore {
         if shellPid > 0 { kill(shellPid, SIGHUP) }
         tabs.remove(at: index)
         if activeTabIndex >= tabs.count { activeTabIndex = tabs.count - 1 }
+    }
+
+    /// Saves each open tab's current working directory and the active tab so the
+    /// next launch can reopen them. Called when Termini quits. A live shell can't
+    /// be serialized, so only the tabs and their directories are restored — not
+    /// scrollback or running processes. Clears the saved session when restore is
+    /// off, so a disabled toggle also forgets the last session.
+    func persistSession() {
+        guard restoreTabs else {
+            UserDefaults.standard.removeObject(forKey: "savedTabDirectories")
+            UserDefaults.standard.removeObject(forKey: "savedActiveTabIndex")
+            return
+        }
+        let directories = tabs.map { tab -> String in
+            let pid = tab.terminalView.process.shellPid
+            return cwdForPid(pid) ?? tab.processDelegate.currentDirectory
+        }
+        UserDefaults.standard.set(directories, forKey: "savedTabDirectories")
+        UserDefaults.standard.set(activeTabIndex, forKey: "savedActiveTabIndex")
     }
 
     fileprivate var installedTerminals: [TerminalApp] {
@@ -679,6 +734,15 @@ struct SettingsView: View {
             // Global shortcut that opens/closes Termini from any app
             settingsRow("Shortcut") {
                 KeyboardShortcuts.Recorder(for: .toggleTermini)
+            }
+
+            settingsDivider
+
+            settingsRow("Tabs") {
+                @Bindable var store = store
+                Toggle("Restore on relaunch", isOn: $store.restoreTabs)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
 
             settingsDivider
